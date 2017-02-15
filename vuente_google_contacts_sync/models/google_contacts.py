@@ -9,11 +9,14 @@ import math
 from openerp.http import request
 from datetime import datetime, timedelta
 from openerp.tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT, exception_to_unicode
-from openerp.exceptions import UserError
+from openerp.exceptions import RedirectWarning, UserError
 from openerp.addons.google_account import TIMEOUT
 from lxml import etree
+from openerp.tools.translate import _
 
 from openerp import api, fields, models
+
+
 
 class GoogleContacts(models.Model):
 
@@ -52,17 +55,68 @@ class GoogleContacts(models.Model):
             return {'type': 'ir.actions.act_url', 'url': url, 'target': 'self'}
 
 
+    def get_google_scope(self):
+        return 'https://www.googleapis.com/auth/contacts.readonly'
+
+    @api.model
+    def get_access_token(self, scope=None):
+        ir_config = self.env['ir.config_parameter']
+        '''
+        google_contacts_refresh_token = ir_config.get_param('google_contacts_refresh_token')
+        if not google_contacts_refresh_token:
+            if self.env['res.users']._is_admin([self.env.uid]):
+                model, action_id = self.env['ir.model.data'].get_object_reference('base_setup', 'action_general_configuration')
+                msg = _("You haven't configured 'Authorization Code' generated from google, Please generate and configure it .")
+                raise openerp.exceptions.RedirectWarning(msg, action_id, _('Go to the configuration panel'))
+            else:
+                raise UserError(_("Google Contacts is not yet configured. Please contact your administrator."))
+        '''
+        google_contacts_client_id = ir_config.get_param('google_contacts_client_id')
+        google_contacts_client_secret = ir_config.get_param('google_contacts_client_secret')
+
+        google_contacts_refresh_token = self.env.user.google_contacts_rtoken
+        #For Getting New Access Token With help of old Refresh Token
+
+        data = werkzeug.url_encode(dict(client_id=google_contacts_client_id,
+                                     refresh_token=google_contacts_refresh_token,
+                                     client_secret=google_contacts_client_secret,
+                                     grant_type="refresh_token",
+                                     scope=scope or 'https://www.googleapis.com/auth/contacts.readonly'))
+        headers = {"Content-type": "application/x-www-form-urlencoded"}
+        try:
+            req = urllib2.Request('https://accounts.google.com/o/oauth2/token', data, headers)
+            content = urllib2.urlopen(req, timeout=TIMEOUT).read()
+        except urllib2.HTTPError:
+            if user_is_admin:
+                model, action_id = self.env['ir.model.data'].get_object_reference('base_setup', 'action_general_configuration')
+                msg = _("Something went wrong during the token generation. Please request again an authorization code .")
+                raise openerp.exceptions.RedirectWarning(msg, action_id, _('Go to the configuration panel'))
+            else:
+                raise UserError(_("Google Drive is not yet configured. Please contact your administrator."))
+        content = json.loads(content)
+        return content.get('access_token')
+
+       
+
     @api.model
     def cron_sync(self):
         gs_pool = self.env['google.service']
 
-        access_token = self.env.user.google_contacts_token
+# debut modif
+#        access_token = self.env.user.google_contacts_token
+        access_token = self.get_access_token()
+        dic_partner = {}
+        for res in self.env['res.partner'].search_read([('is_company','=',True)]) :
+            dic_partner[res['name']] = res['id']
+# fin modif
         
         headers = {'Authorization': 'Bearer ' + access_token, 'GData-Version': '3.0'}
 
         #Get the 'My Contacts' Group
         response_string = requests.get("https://www.google.com/m8/feeds/groups/default/full/?v=3.0&alt=json", headers=headers)
+
         google_contacts_group_json = json.loads(response_string.text.encode('utf-8'))
+
 
         my_contacts_group = google_contacts_group_json['feed']['entry'][0]['id']['$t']
         
@@ -89,6 +143,16 @@ class GoogleContacts(models.Model):
                 g_contact_dict = {'google_contacts_id': contact_id, 'customer': False, 'google_contacts_account': account_email}
 
                 g_contact_dict['name'] = contact['gd$name']['gd$fullName']['$t']
+
+# debut modif
+                if 'gd$organization' in contact and 'gd$orgName' in contact['gd$organization'][0]:
+                    soc_name = contact['gd$organization'][0]['gd$orgName']['$t']
+                    if soc_name not in dic_partner :
+                        partner_id = self.env['res.partner'].create({'name': soc_name, 'is_company': True, 'customer': False })
+                        dic_partner[soc_name] = partner_id.id
+                        g_contact_dict['parent_id'] = partner_id.id
+# fin modif
+
             
                 if 'gd$email' in contact:
                     g_contact_dict['email'] = contact['gd$email'][0]['address']
@@ -132,39 +196,3 @@ class GoogleContacts(models.Model):
             response_string = requests.get("https://www.google.com/m8/feeds/contacts/default/full?v=3.0&alt=json&start-index=" + str(start_index), headers=headers)
             google_contacts_json = json.loads(response_string.text.encode('utf-8'))
 
-        
-    def get_google_scope(self):
-        return 'https://www.googleapis.com/auth/contacts.readonly'
-
-    def get_access_token(self, scope=None):
-        ir_config = self.env['ir.config_parameter']
-        google_contacts_refresh_token = ir_config.get_param('google_contacts_refresh_token')
-        if not google_contacts_refresh_token:
-            if self.env['res.users']._is_admin([self.env.uid]):
-                model, action_id = self.env['ir.model.data'].get_object_reference('base_setup', 'action_general_configuration')
-                msg = _("You haven't configured 'Authorization Code' generated from google, Please generate and configure it .")
-                raise openerp.exceptions.RedirectWarning(msg, action_id, _('Go to the configuration panel'))
-            else:
-                raise UserError(_("Google Contacts is not yet configured. Please contact your administrator."))
-        google_contacts_client_id = ir_config.get_param('google_contacts_client_id')
-        google_contacts_client_secret = ir_config.get_param('google_contacts_client_secret')
-        #For Getting New Access Token With help of old Refresh Token
-
-        data = werkzeug.url_encode(dict(client_id=google_contacts_client_id,
-                                     refresh_token=google_contacts_refresh_token,
-                                     client_secret=google_contacts_client_secret,
-                                     grant_type="refresh_token",
-                                     scope=scope or 'https://www.googleapis.com/auth/contacts.readonly'))
-        headers = {"Content-type": "application/x-www-form-urlencoded"}
-        try:
-            req = urllib2.Request('https://accounts.google.com/o/oauth2/token', data, headers)
-            content = urllib2.urlopen(req, timeout=TIMEOUT).read()
-        except urllib2.HTTPError:
-            if user_is_admin:
-                model, action_id = self.env['ir.model.data'].get_object_reference('base_setup', 'action_general_configuration')
-                msg = _("Something went wrong during the token generation. Please request again an authorization code .")
-                raise openerp.exceptions.RedirectWarning(msg, action_id, _('Go to the configuration panel'))
-            else:
-                raise UserError(_("Google Drive is not yet configured. Please contact your administrator."))
-        content = json.loads(content)
-        return content.get('access_token')
