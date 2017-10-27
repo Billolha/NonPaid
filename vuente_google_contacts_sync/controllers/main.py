@@ -8,7 +8,7 @@ import json
 import odoo
 import re
 
-from odoo.addons.website.models.website import slug
+from odoo.addons.http_routing.models.ir_http import slug
 
 class GoogleContactsAuthController(http.Controller):
 
