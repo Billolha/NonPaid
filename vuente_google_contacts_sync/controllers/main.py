@@ -1,5 +1,5 @@
 import openerp.http as http
-from openerp.http import request
+from odoo.http import request
 import logging
 _logger = logging.getLogger(__name__)
 import werkzeug
@@ -8,7 +8,7 @@ import json
 import openerp
 import re
 
-from openerp.addons.website.models.website import slug
+from odoo.addons.website.models.website import slug
 
 class GoogleContactsAuthController(http.Controller):
 

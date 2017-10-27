@@ -6,15 +6,15 @@ import json
 import urllib2
 import requests
 import math
-from openerp.http import request
+from odoo.http import request
 from datetime import datetime, timedelta
-from openerp.tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT, exception_to_unicode
-from openerp.exceptions import RedirectWarning, UserError
-from openerp.addons.google_account import TIMEOUT
+from odoo.tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT, exception_to_unicode
+from odoo.exceptions import RedirectWarning, UserError
+from odoo.addons.google_account import TIMEOUT
 from lxml import etree
-from openerp.tools.translate import _
+from odoo.tools.translate import _
 
-from openerp import api, fields, models
+from odoo import api, fields, models
 
 
 

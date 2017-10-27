@@ -4,7 +4,7 @@ _logger = logging.getLogger(__name__)
 import werkzeug
 import json
 
-from openerp import api, fields, models
+from odoo import api, fields, models
 
 class ResPartnerGoogleContacts(models.Model):
 
