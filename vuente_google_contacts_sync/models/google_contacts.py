@@ -3,7 +3,7 @@ import logging
 _logger = logging.getLogger(__name__)
 import werkzeug
 import json
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import requests
 import math
 from odoo.http import request
@@ -84,9 +84,9 @@ class GoogleContacts(models.Model):
                                      scope=scope or 'https://www.googleapis.com/auth/contacts.readonly'))
         headers = {"Content-type": "application/x-www-form-urlencoded"}
         try:
-            req = urllib2.Request('https://accounts.google.com/o/oauth2/token', data, headers)
-            content = urllib2.urlopen(req, timeout=TIMEOUT).read()
-        except urllib2.HTTPError:
+            req = urllib.request.Request('https://accounts.google.com/o/oauth2/token', data, headers)
+            content = urllib.request.urlopen(req, timeout=TIMEOUT).read()
+        except urllib.error.HTTPError:
             if user_is_admin:
                 model, action_id = self.env['ir.model.data'].get_object_reference('base_setup', 'action_general_configuration')
                 msg = _("Something went wrong during the token generation. Please request again an authorization code .")

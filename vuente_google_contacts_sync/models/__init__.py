@@ -1,1 +1,1 @@
-import config_settings, google_contacts, res_users, res_partner, crm_lead
+from . import config_settings, google_contacts, res_users, res_partner, crm_lead
