@@ -26,7 +26,7 @@
       </record>
 
       <menuitem id="google_contacts_menu" name="Google Contact Sync" parent="base.menu_administration" sequence="200" action="google_contacts_action"/>
-      <menuitem id="google_contacts_contacts_menu" name="Google Contacts" parent="base.menu_sales" sequence="200" action="google_contacts_contact_action"/>
+      <menuitem id="google_contacts_contacts_menu" name="Google Contacts" parent="base.menu_sales_config" sequence="200" action="google_contacts_contact_action"/>
 
   </data>
 </odoo>
