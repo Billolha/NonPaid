@@ -18,9 +18,9 @@ class GoogleContactsAuthController(http.Controller):
         
         #web?view_type=list&model=res.partner&menu_id=154&action=170#page=0&limit=80&view_type=list&model=res.partner&menu_id=154&action=170        
         
-	google_contacts_menu = request.env['ir.model.data'].sudo().get_object('vuente_google_contacts_sync', 'google_contacts_contacts_menu')
-	google_contacts_menu_action = request.env['ir.model.data'].sudo().get_object('vuente_google_contacts_sync', 'google_contacts_contact_action')
-	        
+        google_contacts_menu = request.env['ir.model.data'].sudo().get_object('vuente_google_contacts_sync', 'google_contacts_contacts_menu')
+        google_contacts_menu_action = request.env['ir.model.data'].sudo().get_object('vuente_google_contacts_sync', 'google_contacts_contact_action')
+    
         return werkzeug.utils.redirect("/web?view_type=list&model=res.partner&menu_id=" + str(google_contacts_menu.id) + "&action=" + str(google_contacts_menu_action.id) + "#page=0&limit=80&view_type=list&model=res.partner&menu_id=" + str(google_contacts_menu.id) + "&action=" + str(google_contacts_menu_action.id) )
         
         #return {
