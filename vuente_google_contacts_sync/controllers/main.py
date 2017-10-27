@@ -1,11 +1,11 @@
-import openerp.http as http
+import odoo.http as http
 from odoo.http import request
 import logging
 _logger = logging.getLogger(__name__)
 import werkzeug
 import base64
 import json
-import openerp
+import odoo
 import re
 
 from odoo.addons.website.models.website import slug
