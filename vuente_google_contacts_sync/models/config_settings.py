@@ -5,7 +5,8 @@ from odoo import api, fields, models
 
 class ConfigSettingsGoogleContacts(models.TransientModel):
 
-    _inherit = "base.config.settings"
+    _inherit = "res.config.settings"
+    _name = "googlecontact.config.settings"
 
     def _default_google_contacts_authorization_code(self):
         authorization_code = self.env['ir.config_parameter'].get_param('google_contacts_authorization_code')
